@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>落日寂境 · Sundown Silence</title>
+<style>
+:root{--bg:#0a0b10;--ink:#eadfc4;--dim:#a39b84;--amber:#ffb26b;--moss:#8fc274;--panel:rgba(12,14,18,.9);--line:rgba(255,178,107,.35);box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0a0b10}}
+:root[data-theme="dark"]{--bg:#0a0b10}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:"Noto Serif TC","Songti TC","PMingLiU",Georgia,serif;overflow:hidden;user-select:none;-webkit-user-select:none}
+#app{position:relative;height:100%;overflow:hidden}
+.layer{position:absolute;inset:-5% -6%;will-change:transform}
+.layer svg{position:absolute;inset:0;width:100%;height:100%}
+#sky{background:linear-gradient(#171629 0%,#4a2b44 30%,#b0524a 55%,#e68f58 70%,#2a1f2b 100%)}
+#sun{background:radial-gradient(circle at 70% 62%,#fff0c4 0,#ffc67a 3%,rgba(255,150,70,.55) 9%,rgba(255,120,60,.15) 24%,transparent 45%)}
+canvas{position:absolute;inset:0;width:100%;height:100%}
+#fx{pointer-events:none;mix-blend-mode:screen}
+#g{cursor:pointer;touch-action:none}
+.vig{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 50%,transparent 45%,rgba(0,0,0,.7) 100%),linear-gradient(transparent 70%,rgba(8,8,14,.85))}
+.grain{position:absolute;inset:0;pointer-events:none;opacity:.13;mix-blend-mode:overlay;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence baseFrequency='.9' numOctaves='2'/></filter><rect width='160' height='160' filter='url(%23n)'/></svg>");animation:gr .8s steps(3) infinite}
+@keyframes gr{33%{transform:translate(-3%,2%)}66%{transform:translate(2%,-3%)}}
+#hud{position:absolute;left:0;right:0;top:env(safe-area-inset-top,0px);padding:14px clamp(14px,3vw,34px);display:flex;justify-content:space-between;font:12px ui-monospace,Menlo,Consolas,monospace;letter-spacing:.16em;color:var(--dim);pointer-events:none}
+#hud em{font-style:normal;color:var(--amber)}
+#inv{position:absolute;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);display:flex;gap:8px;z-index:3}
+.sl{width:38px;height:38px;border:1px dashed rgba(255,255,255,.25);background:rgba(0,0,0,.35);color:var(--dim);font:11px ui-monospace,monospace;display:grid;place-items:center;cursor:default}
+.sl.f{border:1px solid var(--moss);color:var(--moss);cursor:pointer;background:rgba(143,194,116,.12)}
+#hint{position:absolute;left:0;right:0;bottom:calc(66px + env(safe-area-inset-bottom,0px));text-align:center;font-size:12px;letter-spacing:.2em;color:var(--dim);pointer-events:none}
+#scan{position:absolute;left:50%;top:60%;transform:translateX(-50%);display:none;z-index:3;background:rgba(10,12,16,.85);border:1px solid var(--amber);color:var(--ink);padding:10px 22px;letter-spacing:.2em;font:14px "Noto Serif TC",Georgia,serif;cursor:pointer;box-shadow:0 0 24px rgba(255,178,107,.3)}
+#scan.on{display:block;animation:pu 1.6s infinite}
+@keyframes pu{50%{box-shadow:0 0 36px rgba(255,178,107,.6)}}
+#intro{position:absolute;inset:0;z-index:10;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;background:radial-gradient(ellipse at center,rgba(8,8,14,.55),rgba(8,8,14,.9));transition:opacity 1.2s}
+#intro.off{opacity:0;pointer-events:none}
+#intro h1{font-weight:300;font-size:clamp(44px,11vw,120px);letter-spacing:.35em;text-indent:.35em;text-shadow:0 4px 40px #000}
+#intro p{margin-top:10px;letter-spacing:.5em;color:var(--amber);font-size:clamp(12px,1.6vw,16px)}
+#intro small{display:block;max-width:34em;margin:26px auto 30px;color:var(--dim);line-height:2;font-size:14px}
+#go{background:none;border:1px solid var(--amber);color:var(--ink);padding:12px 38px;letter-spacing:.4em;font:inherit;font-size:15px;cursor:pointer}
+#go:hover{background:var(--amber);color:#000}
+#modal{position:fixed;inset:0;z-index:20;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);padding:20px}
+#modal.on{display:flex}
+.card{width:min(680px,100%);max-height:88vh;overflow:auto;background:var(--panel);border:1px solid var(--line);padding:26px clamp(18px,4vw,34px);box-shadow:0 0 60px rgba(255,150,70,.15);font-family:ui-monospace,Menlo,Consolas,monospace;position:relative;user-select:text}
+.card:before{content:"";position:absolute;left:0;right:0;top:0;height:2px;background:var(--amber);box-shadow:0 0 14px var(--amber);animation:sc 2s ease-in-out 1}
+@keyframes sc{from{top:0}to{top:100%}}
+.card h2{font-family:"Noto Serif TC","Songti TC",Georgia,serif;font-weight:400;font-size:26px;letter-spacing:.15em;margin:6px 0 2px}
+.tag{font-size:11px;letter-spacing:.25em;color:var(--amber)}
+.bar{height:3px;background:rgba(255,255,255,.1);margin:16px 0}.bar div{height:100%;width:0;background:var(--amber);transition:width 1.8s linear}
+.log{font-size:12px;color:var(--dim);line-height:1.9;min-height:3.8em}
+.rep{display:none}.rep.on{display:block;animation:fi .8s}@keyframes fi{from{opacity:0}}
+dl{display:grid;grid-template-columns:7em 1fr;gap:6px 12px;font-size:13px;margin:12px 0}dt{color:var(--dim)}
+.note{border-left:2px solid var(--moss);padding:4px 0 4px 14px;font-family:"Noto Serif TC",Georgia,serif;font-size:15px;line-height:1.9;margin-top:14px}
+.note b{display:block;font:400 11px ui-monospace,monospace;letter-spacing:.25em;color:var(--moss);margin-bottom:4px}
+.x{position:absolute;right:14px;top:12px;background:none;border:1px solid var(--line);color:var(--ink);padding:4px 12px;cursor:pointer;font:12px inherit}
+.x:hover{background:var(--amber);color:#000}
+#toast{position:absolute;left:50%;top:14%;transform:translateX(-50%);z-index:5;padding:12px 26px;border:1px solid var(--moss);background:rgba(10,14,10,.85);letter-spacing:.2em;font-size:14px;opacity:0;transition:opacity .6s;pointer-events:none;text-align:center}
+#nsky{background:linear-gradient(#05060f,#0d1330 40%,#2a2347 68%,#14101c);opacity:0}
+#tint{position:absolute;inset:0;pointer-events:none;background:rgba(12,18,55,.42);mix-blend-mode:multiply;opacity:0}
+#tools{position:absolute;right:clamp(14px,3vw,34px);top:calc(46px + env(safe-area-inset-top,0px));display:flex;flex-direction:column;gap:8px;z-index:3}
+#tools button,.ch{background:rgba(10,12,16,.8);border:1px solid var(--line);color:var(--ink);padding:8px 14px;font:13px "Noto Serif TC",Georgia,serif;letter-spacing:.15em;cursor:pointer;text-align:left}
+#tools button:hover,.ch:hover{background:var(--amber);color:#000}
+.ch{display:block;width:100%;margin-top:10px;line-height:1.7;font-size:15px}
+.ch small{display:block;color:var(--dim);font-size:12px;letter-spacing:.05em}
+.ch:hover small{color:#222}
+@media (prefers-reduced-motion:reduce){.grain,#scan.on{animation:none}}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="layer" id="sky"></div><div class="layer" id="nsky"></div><div class="layer" id="sun"></div>
+  <div class="layer" id="far"></div><div class="layer" id="mid"></div>
+  <canvas id="g"></canvas><div id="tint"></div><canvas id="fx"></canvas>
+  <div class="vig"></div><div class="grain"></div>
+  <div id="hud"><span>CHICAGO · 西元 <em>4317</em> · 日落 17:42</span><span>發現 <em id="cnt">0</em> / <span id="tot">8</span></span></div>
+  <button id="scan"></button><div id="tools"></div>
+  <div id="toast"></div>
+  <div id="hint">WASD / 方向鍵移動 · 點擊地面行走 · 靠近光點按 E 掃描</div>
+  <div id="inv"></div>
+  <div id="intro"><h1>落日寂境</h1><p>SUNDOWN SILENCE</p>
+    <small>西元 4317 年，人類文明早已沉寂。你是一名從遠方星系降落的訪客，在被藤蔓與森林吞沒的芝加哥廢墟中，尋找這個物種留下的痕跡，以及這片土地上的新生命。</small>
+    <button id="go">降　落</button></div>
+</div>
+<div id="modal" role="dialog" aria-modal="true"><div class="card" id="card"></div></div>
+<script>
+(function(){
+var $=function(i){return document.getElementById(i)};
+var I=[
+{n:"智慧型手機",k:"人類遺物",x:3,y:2,c:[".9,.9,1"],col:"#cfe3ff",yr:"約 2020–2030 年代",m:"玻璃、鋁合金、鋰電池",s:"螢幕碎裂，苔蘚覆蓋",r:"一種可攜式通訊裝置。電池已劣化，但記憶體晶片仍有微弱殘留。我們還原出一張模糊照片：一群人在湖畔笑著，背後的天際線尚未傾頹。",q:"他們把整個世界握在掌心，卻在最後一刻放下了它。"},
+{n:"泰迪熊",k:"人類遺物",x:11,y:3,col:"#d9a066",yr:"約 2010 年代",m:"聚酯纖維、棉絮",s:"嚴重風化，鳥巢入駐",r:"柔軟的人形玩具，多見於幼體人類的居所。內部填充物已被小型哺乳動物當作巢材。推測具有情感依附功能。",q:"文明崩毀了，一隻鳥卻因此有了溫暖的家。"},
+{n:"街道路牌",k:"人類遺物",x:12,y:9,col:"#5fb08a",yr:"約 1950–2100 年",m:"鍍鋅鋼板、反光塗層",s:"鏽蝕，藤蔓纏繞",r:"標示著「密西根大道」的導引標誌。反光塗層在夕照下仍微微發亮。人類以命名為土地劃分秩序，而大自然顯然不在乎。",q:"他們為每條路取了名字，如今只有鹿群認得。"},
+{n:"黑膠唱片",k:"人類遺物",x:8,y:11,col:"#b9a7ff",yr:"約 1970–2010 年代",m:"聚氯乙烯",s:"彎曲變形，紋路可辨",r:"以刻痕儲存聲波的圓盤。我們以光學掃描重建出一段旋律：緩慢、帶藍調和弦，節奏接近人類心跳。推測為此地的在地音樂。",q:"這是我在這顆星球上聽過最悲傷也最溫柔的聲音。"},
+{n:"銀色戒指",k:"人類遺物",x:2,y:9,col:"#ffffff",yr:"約 2000 年代",m:"白金，內側刻字",s:"保存良好",r:"環形飾品，內側刻有兩個名字與一個日期。人類以此象徵長期的伴侶承諾。金屬幾乎沒有氧化，是目前保存最完整的遺物。",q:"在所有會腐朽的東西裡，他們選了最不朽的來表達愛。"},
+{n:"咖啡紙杯",k:"人類遺物",x:6,y:2,col:"#e8e0d0",yr:"約 2020–2040 年代",m:"紙漿、聚乙烯內襯",s:"半埋泥土，長出幼苗",r:"一次性飲品容器。杯中已長出一株橡樹幼苗。人類製造這類物品只為使用幾分鐘，卻比許多紀念碑留存得更久。",q:"他們的日常，成了這片森林的種子盆。"},
+{n:"發光孢子菇",k:"新發現 · 生物",x:9,y:7,col:"#6dffd0",yr:"估計出現於 3800 年後",m:"真菌、生物螢光蛋白",s:"活體，族群擴散中",r:"一種在混凝土裂縫中群生的真菌，會在黃昏釋放發光孢子，也就是空中飄浮的光塵。它們分解人類的塑膠，並以此為食。",q:"文明的垃圾，養出了這座城市的星空。"},
+{n:"藤角鹿足跡",k:"新發現 · 生物",x:4,y:6,col:"#ffd36b",yr:"數小時內",m:"泥土、苔蘚",s:"新鮮",r:"一種大型反芻動物的足跡，成群行動，角上纏繞著藤蔓與苔蘚。牠們以高樓屋頂的草地為牧場，似乎一點也不怕你。",q:"遠處那隻鹿回頭看了我一眼，像是在確認我值不值得信任。"},
+{n:"時間膠囊",k:"最終發現",hid:true,x:10,y:10,col:"#ffe28a",yr:"封存於 2026 年",m:"不鏽鋼、真空密封",s:"完好，內容物未受損",r:"一只預定於 2126 年開啟的金屬圓筒，卻從未有人回來取走。裡面有一包種子、孩子們的手繪畫，以及一張手寫便條，收件人是「未來的人」。",q:"這是一封寫給未來的信，而收件人剛好是我。"}];
+var N=14,TW=100,TH=50,ZH=38,seed=11;
+function rnd(){seed=(seed*16807)%2147483647;return seed/2147483647}
+function hs(a,b,c){var h=Math.sin(a*127.1+b*311.7+c*74.7)*43758.5453;return h-Math.floor(h)}
+/* background skyline */
+function city(o){var s='<svg viewBox="0 0 1600 800" preserveAspectRatio="xMidYMax slice">',x=-40;
+while(x<1640){var w=50+rnd()*100,h=o.a+rnd()*(o.b-o.a),y=800-h;s+='<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" fill="'+o.c+'"/>';
+for(var v=0;v<3;v++){var vx=x+rnd()*w;s+='<path d="M'+vx+' '+y+' q'+((rnd()-.5)*14)+' '+h*.3+' 0 '+(30+rnd()*h*.5)+'" stroke="'+o.g+'" stroke-width="3" fill="none" opacity=".8"/>'}
+s+='<path d="M'+x+' '+y+' h'+w+' l-8 9 l-12 -5 l-14 10 l-14 -8 l-10 8z" fill="'+o.g+'"/>';x+=w+rnd()*8}
+return s+'</svg>'}
+$("far").innerHTML=city({c:"#5b3340",g:"#4f5c3b",a:200,b:480});
+$("mid").innerHTML=city({c:"#241c26",g:"#2c4528",a:140,b:380});
+/* map */
+var H=[],T=[],O=[],x,y;
+for(y=0;y<N;y++){H[y]=[];T[y]=[];O[y]=[];for(x=0;x<N;x++){var v=Math.sin(x*.55+1)+Math.cos(y*.5)+Math.sin((x+y)*.3);H[y][x]=v>1.1?2:v>-.3?1:0;T[y][x]=Math.sin(x*1.3+y*.7)+Math.cos(y*1.1-x*.4)>-.2?0:1}}
+for(var p=0;p<2;p++)for(y=0;y<N;y++)for(x=0;x<N;x++){if(x&&Math.abs(H[y][x]-H[y][x-1])>1)H[y][x]=H[y][x-1]+(H[y][x]>H[y][x-1]?1:-1);if(y&&Math.abs(H[y][x]-H[y-1][x])>1)H[y][x]=H[y-1][x]+(H[y][x]>H[y-1][x]?1:-1)}
+var IT={};I.forEach(function(r,i){IT[r.y*N+r.x]=i});
+for(y=0;y<N;y++)for(x=0;x<N;x++){O[y][x]=null;if(IT[y*N+x]!==undefined||(Math.abs(x-6)<2&&Math.abs(y-6)<2))continue;var q=rnd();if(q<.16)O[y][x]={t:"b",h:2.5+rnd()*3.5};else if(q<.3)O[y][x]={t:"t"};else if(q<.36)O[y][x]={t:"r"}}
+function ok(fx,fy,tx,ty){return tx>=0&&ty>=0&&tx<N&&ty<N&&!O[ty][tx]&&Math.abs(H[ty][tx]-H[fy][fx])<=1}
+var D4=[[1,0],[-1,0],[0,1],[0,-1]];
+function bfs(sx,sy){var par={},q=[[sx,sy]];par[sy*N+sx]=-1;while(q.length){var c=q.shift();D4.forEach(function(d){var a=c[0]+d[0],b=c[1]+d[1];if(ok(c[0],c[1],a,b)&&par[b*N+a]===undefined){par[b*N+a]=c[1]*N+c[0];q.push([a,b])}})}return par}
+for(var it=0;it<400;it++){var pr=bfs(6,6),bad=I.some(function(r){return pr[r.y*N+r.x]===undefined});if(!bad)break;var rx=Math.floor(rnd()*N),ry=Math.floor(rnd()*N);O[ry][rx]=null}
+if(I.some(function(r){return bfs(6,6)[r.y*N+r.x]===undefined}))for(y=0;y<N;y++)for(x=0;x<N;x++)H[y][x]=1;
+/* canvas / camera */
+var cv=$("g"),g=cv.getContext("2d"),fx=$("fx"),f=fx.getContext("2d"),W,Hh,dpr=Math.min(devicePixelRatio||1,2),sc=1;
+function size(){var a=$("app");W=a.clientWidth;Hh=a.clientHeight;[cv,fx].forEach(function(c){c.width=W*dpr;c.height=Hh*dpr});sc=Math.max(.5,Math.min(1.15,W/1400))}
+size();addEventListener("resize",size);
+var cam={x:6.5,y:6.5,z:1},mx=0,my=0,smx=0,smy=0;
+function P(x,y,z){return[(x-y)*TW/2*sc+W/2-(cam.x-cam.y)*TW/2*sc+smx*36,(x+y)*TH/2*sc-z*ZH*sc+Hh*.52-(cam.x+cam.y)*TH/2*sc+cam.z*ZH*sc*.0+smy*20]}
+function poly(a,c){g.beginPath();for(var i=0;i<a.length;i++)i?g.lineTo(a[i][0],a[i][1]):g.moveTo(a[i][0],a[i][1]);g.closePath();g.fillStyle=c;g.fill()}
+function box(x,y,w,d,z0,z1,c){poly([P(x,y+d,z1),P(x+w,y+d,z1),P(x+w,y+d,z0),P(x,y+d,z0)],c[1]);poly([P(x+w,y,z1),P(x+w,y+d,z1),P(x+w,y+d,z0),P(x+w,y,z0)],c[2]);poly([P(x,y,z1),P(x+w,y,z1),P(x+w,y+d,z1),P(x,y+d,z1)],c[0])}
+function rgb(a,k){return"rgb("+a.map(function(v){return Math.min(255,v*k|0)}).join(",")+")"}
+var TC=[[[96,128,70],[44,66,38],[66,96,52]],[[80,72,104],[40,36,62],[56,50,80]]];
+function tile(x,y){var h=H[y][x],t=TC[T[y][x]],k=1+h*.1;box(x,y,1,1,-1.4,h,[rgb(t[0],k),rgb(t[1],1),rgb(t[2],1)]);
+g.strokeStyle="rgba(255,190,130,.16)";g.lineWidth=1;g.beginPath();var a=P(x,y,h),b=P(x+1,y,h),c=P(x+1,y+1,h),d=P(x,y+1,h);g.moveTo(a[0],a[1]);g.lineTo(b[0],b[1]);g.lineTo(c[0],c[1]);g.lineTo(d[0],d[1]);g.closePath();g.stroke();
+if(!T[y][x]){g.fillStyle="rgba(150,210,100,.55)";for(var i=0;i<3;i++){var q=P(x+.2+hs(x,y,i)*.6,y+.2+hs(y,x,i+5)*.6,h);g.beginPath();g.moveTo(q[0]-3*sc,q[1]);g.lineTo(q[0],q[1]-9*sc);g.lineTo(q[0]+3*sc,q[1]);g.fill()}}}
+function face(x0,y0,x1,y1,z0,z1,c){poly([P(x0,y0,z1),P(x1,y1,z1),P(x1,y1,z0),P(x0,y0,z0)],c)}
+function bld(x,y,h,bh){var z=h+bh,a=.08,b=.92;box(x+a,y+a,b-a,b-a,h,z,["#2f4a2b","#231e22","#3a2c2d"]);
+for(var r=0;r<Math.floor(bh*1.6);r++)for(var c=0;c<3;c++){var u=a+.12+c*.26,zz=h+.25+r*.6;if(zz>z-.4)continue;
+if(hs(x,y,r*3+c)>.6)face(x+u,y+b,x+u+.14,y+b,zz,zz+.3,"rgba(255,178,100,"+(.35+hs(r,c,x)*.5)+")");
+if(hs(y,x,r*3+c)>.65)face(x+b,y+u,x+b,y+u+.14,zz,zz+.3,"rgba(255,178,100,"+(.3+hs(c,r,y)*.5)+")")}
+for(var i=0;i<4;i++){var u=a+.1+hs(x,y,i+9)*.6,d=.5+hs(y,x,i)*bh*.6;face(x+u,y+b,x+u+.1,y+b,z-d,z,"#4f7a38");var v=a+.1+hs(y,x,i+3)*.6;face(x+b,y+v,x+b,y+v+.1,z-d*.8,z,"#3d6a2e")}
+var q=P(x+.5,y+.5,z);g.fillStyle="#5c8c3c";for(i=0;i<5;i++){g.beginPath();g.ellipse(q[0]+(hs(x,i,y)-.5)*50*sc,q[1]+(hs(i,y,x)-.5)*16*sc,10*sc,5*sc,0,0,7);g.fill()}}
+function tree(x,y,h,s){var b=P(x+.5,y+.5,h),w=17*sc*s,t=ZH*sc*1.7*s;g.fillStyle="rgba(0,0,0,.3)";g.beginPath();g.ellipse(b[0],b[1],w*1.1,w*.5,0,0,7);g.fill();
+poly([[b[0]-w,b[1]],[b[0],b[1]-t],[b[0],b[1]+w*.45]],"#7db44d");poly([[b[0]+w,b[1]],[b[0],b[1]-t],[b[0],b[1]+w*.45]],"#497d33");
+g.fillStyle="#497d33";g.beginPath();g.ellipse(b[0],b[1]+w*.1,w,w*.5,0,0,Math.PI);g.fill()}
+function drawItem(r,i,t){var h=H[r.y][r.x],got=found[i],bob=Math.sin(t*.003+i)*.07,c=P(r.x+.5,r.y+.5,h);
+g.save();g.globalCompositeOperation="lighter";var gr=g.createRadialGradient(c[0],c[1]-14*sc,0,c[0],c[1]-14*sc,46*sc);var col=got?"143,194,116":"255,190,110";gr.addColorStop(0,"rgba("+col+","+(got?.3:.55+.2*Math.sin(t*.004))+")");gr.addColorStop(1,"rgba("+col+",0)");g.fillStyle=gr;g.fillRect(c[0]-50*sc,c[1]-64*sc,100*sc,100*sc);g.restore();
+box(r.x+.33,r.y+.33,.34,.34,h+.2+bob,h+.55+bob,[r.col,"#6a6a78","#8a8a96"]);}
+/* entities */
+var pl={x:6.5,y:6.5,z:1,path:[],auto:-1,face:1},deer={x:7.5,y:9.5,tx:7,ty:9,t:0};
+function shadow(x,y,z,r){var c=P(x,y,z);g.fillStyle="rgba(0,0,0,.35)";g.beginPath();g.ellipse(c[0],c[1],r*sc,r*.5*sc,0,0,7);g.fill()}
+function drawPl(t){var x=pl.x,y=pl.y,z=pl.z+(pl.moving?Math.abs(Math.sin(t*.012))*.06:0);shadow(x,y,pl.z,15);
+box(x-.18,y-.18,.36,.36,z,z+.45,["#d8d4f4","#9893cc","#b0abe0"]);box(x-.22,y-.22,.44,.44,z+.45,z+.9,["#e6e3fa","#a8a3da","#c3bfec"]);
+var e=[P(x-.1,y+.22,z+.68),P(x+.1,y+.22,z+.68)];g.fillStyle="#13131c";e.forEach(function(p){g.fillRect(p[0]-4*sc,p[1]-3*sc,8*sc,6*sc)});
+var a=P(x,y,z+.9),b=P(x,y,z+1.35);g.strokeStyle="#c3bfec";g.lineWidth=2*sc;g.beginPath();g.moveTo(a[0],a[1]);g.lineTo(b[0],b[1]);g.stroke();
+g.save();g.globalCompositeOperation="lighter";g.fillStyle="rgba(255,190,110,"+(.7+.3*Math.sin(t*.006))+")";g.beginPath();g.arc(b[0],b[1],6*sc,0,7);g.fill();g.restore()}
+function drawDeer(){var x=deer.x,y=deer.y,z=H[Math.floor(y)][Math.floor(x)];shadow(x,y,z,16);var c=["#b8844f","#7f5834","#996b3f"];
+[[-.15,-.1],[.1,-.1],[-.15,.08],[.1,.08]].forEach(function(l){box(x+l[0],y+l[1],.06,.06,z,z+.32,c)});
+box(x-.2,y-.15,.42,.3,z+.32,z+.6,c);box(x+.12,y-.06,.1,.12,z+.6,z+.85,c);box(x+.1,y-.08,.2,.16,z+.82,z+.98,["#d09a62","#8f6538","#a67845"]);
+var a=P(x+.2,y,z+.98);g.strokeStyle="#6b8f4a";g.lineWidth=2*sc;g.beginPath();g.moveTo(a[0],a[1]);g.lineTo(a[0]-6*sc,a[1]-14*sc);g.moveTo(a[0],a[1]);g.lineTo(a[0]+8*sc,a[1]-12*sc);g.stroke()}
+/* state */
+var found={},near=-1,keys={},started=false,mod=false,timer,lastI=-1,ending=0,sigOn=false,night=0,nt=0,t0=Date.now();
+function nearest(){var b=-1,bd=1.25;I.forEach(function(r,i){if(r.hid)return;var d=Math.hypot(pl.x-(r.x+.5),pl.y-(r.y+.5));if(d<bd){bd=d;b=i}});return b}
+function inCan(nx,ny){var fx0=Math.floor(pl.x),fy0=Math.floor(pl.y);return ok(fx0,fy0,Math.floor(nx),Math.floor(ny))}
+function move(dx,dy,dt){var sp=3.1*dt,nx=pl.x+dx*sp,ny=pl.y+dy*sp;if(inCan(nx,ny)){pl.x=nx;pl.y=ny}else if(inCan(nx,pl.y))pl.x=nx;else if(inCan(pl.x,ny))pl.y=ny}
+function click(ex,ey){if(!started||mod)return;var r=cv.getBoundingClientRect(),sx=ex-r.left,sy=ey-r.top,i;
+for(i=0;i<I.length;i++){if(I[i].hid)continue;var c=P(I[i].x+.5,I[i].y+.5,H[I[i].y][I[i].x]+.4);if(Math.hypot(c[0]-sx,c[1]-sy)<34*sc+10){return goto_(I[i].x,I[i].y,i)}}
+for(var d=2*N-2;d>=0;d--)for(var yy=Math.min(N-1,d);yy>=Math.max(0,d-N+1);yy--){var xx=d-yy,cc=P(xx+.5,yy+.5,H[yy][xx]);if(Math.abs(sx-cc[0])/(TW/2*sc)+Math.abs(sy-cc[1])/(TH/2*sc)<=1){if(!O[yy][xx])goto_(xx,yy,-1);return}}}
+function goto_(tx,ty,a){var par=bfs(Math.floor(pl.x),Math.floor(pl.y)),k=ty*N+tx;if(par[k]===undefined)return;var path=[];while(k!==-1&&k!==undefined){path.unshift([k%N+.5,Math.floor(k/N)+.5]);k=par[k]}path.shift();pl.path=path;pl.auto=a}
+cv.addEventListener("pointerdown",function(e){click(e.clientX,e.clientY)});
+$("app").addEventListener("pointermove",function(e){mx=e.clientX/W-.5;my=e.clientY/Hh-.5});
+addEventListener("keydown",function(e){var k=e.key.toLowerCase();if(k=="escape")close();if((k=="e"||k==" ")&&near>=0&&!mod){e.preventDefault();open(near)}keys[k]=1;if(k.indexOf("arrow")==0)e.preventDefault()});
+addEventListener("keyup",function(e){keys[e.key.toLowerCase()]=0});
+$("go").onclick=function(){$("intro").classList.add("off");started=true;t0=Date.now()};
+$("scan").onclick=function(){if(near>=0)open(near)};
+/* inventory */
+I.forEach(function(r,i){var s=document.createElement("div");s.className="sl";s.id="s"+i;s.textContent=i+1;s.onclick=function(){if(found[i])open(i)};if(r.hid)s.style.display="none";$("inv").appendChild(s)});
+/* modal */
+function open(i){var r=I[i],c=$("card");mod=true;lastI=i;clearTimeout(timer);
+c.innerHTML='<button class="x" id="xb">關閉 ✕</button><div class="tag">XENO-SCAN v9 · '+r.k+' · #'+(i+1)+'</div><h2>'+(found[i]?r.n:"分析中…")+'</h2><div class="bar"><div id="pb"></div></div><div class="log" id="lg"></div><div class="rep" id="rp"><dl><dt>名稱</dt><dd>'+r.n+'</dd><dt>分類</dt><dd>'+r.k+'</dd><dt>推定年代</dt><dd>'+r.yr+'</dd><dt>主要成分</dt><dd>'+r.m+'</dd><dt>狀態</dt><dd>'+r.s+'</dd><dt>座標</dt><dd>41.88°N, 87.63°W</dd></dl><p style="font-size:14px;line-height:1.9">'+r.r+'</p><div class="note"><b>訪客日誌</b>'+r.q+'</div></div>';
+$("modal").classList.add("on");$("xb").onclick=close;
+var st=["▸ 發射光譜掃描…","▸ 比對地球資料庫…","▸ 重建材質與年代…","▸ 分析完成。"],lg=$("lg"),n=0;
+function show(){$("rp").classList.add("on");c.querySelector("h2").textContent=r.n;if(!found[i]){found[i]=1;var s=$("s"+i);s.className="sl f";s.textContent="✓";s.title=r.n;var nf=Object.keys(found).length;$("cnt").textContent=nf;if(nf==8&&I[8].hid)setTimeout(unlock,700)}}
+if(found[i]){$("pb").style.width="100%";lg.textContent="▸ 檔案已存入資料庫。";show();return}
+requestAnimationFrame(function(){$("pb").style.width="100%"});
+(function t(){lg.innerHTML+=st[n++]+"<br>";if(n<st.length)timer=setTimeout(t,450);else timer=setTimeout(show,250)})()}
+function close(){clearTimeout(timer);mod=false;$("modal").classList.remove("on");if(lastI==8&&found[8]&&!ending)setTimeout(showEnd,500)}
+function unlock(){I[8].hid=false;sigOn=true;$("s8").style.display="";$("tot").textContent=9;toast("偵測到異常訊號 · 地圖上出現了新的光點，跟著黃色箭頭前進")}
+var ENDS=[{t:"留下信標",d:"在這裡點亮一道光，讓之後的訪客知道曾有人記得",h:"結局 · 信標",p:"光柱升向夜空。多年後，另一艘船降落在這片森林，船上的人循著光，找到了你留下的紀錄。"},
+{t:"種下種子",d:"把膠囊裡的種子埋進這片土地",h:"結局 · 新芽",p:"你把種子埋進混凝土的裂縫。第二年春天，芝加哥長出了一株由人類留下、由訪客種下的樹。"},
+{t:"讓沉默繼續",d:"原封不動地合上膠囊，把故事還給這座城市",h:"結局 · 安眠",p:"你蓋好膠囊，輕輕放回土裡。夜幕降臨，孢子一盞一盞亮起，這座城市從來不需要被拯救。"}];
+function showEnd(){mod=true;var c=$("card");c.innerHTML='<div class="tag">FINAL LOG · 終章</div><h2>你要如何離開？</h2><p style="font-size:14px;line-height:1.9;margin-top:10px">便條上寫著：「如果你讀到這封信，希望這裡還有綠色。」這裡確實還有。你想為這個故事留下什麼結尾？</p>'+ENDS.map(function(e,k){return'<button class="ch" data-k="'+k+'">'+e.t+'<small>'+e.d+'</small></button>'}).join("");$("modal").classList.add("on");
+c.querySelectorAll(".ch").forEach(function(b){b.onclick=function(){ending=+b.dataset.k+1;if(ending==3)nt=1;tools();report()}})}
+function report(){var e=ENDS[ending-1],s=Math.round((Date.now()-t0)/1000),c=$("card");mod=true;
+c.innerHTML='<button class="x" id="xb">繼續漫遊</button><div class="tag">VISITOR REPORT · 訪客報告</div><h2>'+e.h+'</h2><p style="font-size:15px;line-height:1.9;margin-top:10px">'+e.p+'</p><dl><dt>人類遺物</dt><dd>6 / 6</dd><dt>新發現</dt><dd>2 / 2</dd><dt>最終發現</dt><dd>時間膠囊</dd><dt>探索時間</dt><dd>'+Math.floor(s/60)+' 分 '+s%60+' 秒</dd></dl><div class="note"><b>文明重建（推測）</b>這座城市曾有人每天清晨買一杯咖啡，用手機留下孩子的笑容，夜裡放一張黑膠，把熊娃娃放在枕邊。他們戴上戒指，走過那些有名字的街，最後把寫給未來的信埋進土裡。文明離開了，這些小東西替他們說完了話。</div><button class="ch" id="rs">重新降落<small>回到起點，再走一次這座城市</small></button>';
+$("xb").onclick=close;$("rs").onclick=function(){location.reload()};$("modal").classList.add("on")}
+function tools(){$("tools").innerHTML='<button id="tn">'+(nt?"☀ 回到黃昏":"☾ 夜幕模式")+'</button><button id="tr">訪客報告</button>';$("tn").onclick=function(){nt=nt?0:1;tools()};$("tr").onclick=report}
+$("modal").onclick=function(e){if(e.target==this)close()};
+function toast(m){var t=$("toast");t.textContent=m;t.style.opacity=1;setTimeout(function(){t.style.opacity=0},4500)}
+/* particles */
+var Pt=[];for(var i=0;i<120;i++)Pt.push({x:Math.random(),y:Math.random(),r:.6+Math.random()*2.4,s:.02+Math.random()*.06,p:Math.random()*6.28,c:Math.random()>.4?"255,196,120":"130,240,200",z:Math.random()});
+var reduce=matchMedia("(prefers-reduced-motion:reduce)").matches,last=0;
+function frame(t){var dt=Math.min(.05,(t-last)/1000);last=t;requestAnimationFrame(frame);
+smx+=(mx-smx)*.06;smy+=(my-smy)*.06;
+$("sky").style.transform="translate("+(-smx*10)+"px,"+(-smy*5)+"px)";$("sun").style.transform="translate("+(-smx*22)+"px,"+(-smy*10)+"px)";
+$("far").style.transform="translate("+(-smx*40)+"px,"+(-smy*14)+"px)";$("mid").style.transform="translate("+(-smx*70)+"px,"+(-smy*24)+"px)";
+night+=(nt-night)*Math.min(1,dt*2);$("nsky").style.opacity=night;$("tint").style.opacity=night;$("sun").style.opacity=1-night;$("nsky").style.transform="translate("+(-smx*10)+"px,"+(-smy*5)+"px)";
+/* update */
+pl.moving=false;
+if(started&&!mod){var dx=0,dy=0;if(keys.w||keys.arrowup){dx--;dy--}if(keys.s||keys.arrowdown){dx++;dy++}if(keys.a||keys.arrowleft){dx--;dy++}if(keys.d||keys.arrowright){dx++;dy--}
+if(dx||dy){pl.path=[];pl.auto=-1;var l=Math.hypot(dx,dy);move(dx/l,dy/l,dt);pl.moving=true}
+else if(pl.path.length){var w=pl.path[0],ax=w[0]-pl.x,ay=w[1]-pl.y,dd=Math.hypot(ax,ay);pl.moving=true;if(dd<.08)pl.path.shift();else{pl.x+=ax/dd*3.1*dt;pl.y+=ay/dd*3.1*dt}
+if(!pl.path.length&&pl.auto>=0){var a=pl.auto;pl.auto=-1;open(a)}}}
+var tz=H[Math.floor(pl.y)][Math.floor(pl.x)];pl.z+=(tz-pl.z)*Math.min(1,dt*10);
+cam.x+=(pl.x-cam.x)*.07;cam.y+=(pl.y-cam.y)*.07;
+near=mod?-1:nearest();var sb=$("scan");if(near>=0){sb.className="on";sb.textContent=(found[near]?"重新檢視 · ":"掃描 · ")+(found[near]?I[near].n:"未知物體")+"  [E]"}else sb.className="";
+deer.t-=dt;if(deer.t<=0){deer.t=3+Math.random()*4;var d=D4[Math.floor(Math.random()*4)],nx=deer.tx+d[0],ny=deer.ty+d[1];if(ok(deer.tx,deer.ty,nx,ny)&&!(nx==Math.floor(pl.x)&&ny==Math.floor(pl.y))){deer.tx=nx;deer.ty=ny}}
+deer.x+=(deer.tx+.5-deer.x)*dt*.8;deer.y+=(deer.ty+.5-deer.y)*dt*.8;
+/* draw */
+g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,W,Hh);
+var ents=[[Math.floor(pl.x)+Math.floor(pl.y),function(){drawPl(t)}],[Math.floor(deer.x)+Math.floor(deer.y),drawDeer]];
+for(var d=0;d<=2*N-2;d++){for(var y=Math.max(0,d-N+1);y<=Math.min(N-1,d);y++){var x=d-y,h=H[y][x],o=O[y][x];tile(x,y);
+if(o){if(o.t=="b")bld(x,y,h,o.h);else if(o.t=="t"){tree(x,y,h,1);if(hs(x,y,1)>.5)tree(x+.28,y-.18,h,.6)}else{box(x+.25,y+.3,.5,.4,h,h+.3,["#6c6a72","#3d3b44","#524f5a"]);}}
+if(IT[y*N+x]!==undefined&&!I[IT[y*N+x]].hid)drawItem(I[IT[y*N+x]],IT[y*N+x],t);if(ending==2&&x==I[8].x&&y==I[8].y)tree(x,y,h,1.3)}
+ents.forEach(function(e){if(e[0]==d)e[1]()})}
+/* particles */
+if(ending==1){g.save();g.globalCompositeOperation="lighter";var bc=P(I[8].x+.5,I[8].y+.5,H[I[8].y][I[8].x]),bg=g.createLinearGradient(0,bc[1],0,0);bg.addColorStop(0,"rgba(255,226,138,.85)");bg.addColorStop(1,"rgba(255,226,138,0)");g.fillStyle=bg;g.fillRect(bc[0]-8*sc,0,16*sc,bc[1]);g.restore()}
+f.setTransform(dpr,0,0,dpr,0,0);f.clearRect(0,0,W,Hh);
+Pt.forEach(function(p){if(!reduce){p.y-=p.s*.0016*(1+p.z)*16*dt*60/16;p.x+=Math.sin(t*.0004+p.p)*.0002}if(p.y<-.02){p.y=1.02;p.x=Math.random()}
+var px=p.x*W-smx*p.z*110,py=p.y*Hh-smy*p.z*60,a=(.35+.4*Math.sin(t*.002+p.p))*(1+night*.7),gr=f.createRadialGradient(px,py,0,px,py,p.r*5);gr.addColorStop(0,"rgba("+p.c+","+a+")");gr.addColorStop(1,"rgba("+p.c+",0)");f.fillStyle=gr;f.beginPath();f.arc(px,py,p.r*5,0,6.283);f.fill()});
+if(sigOn&&!found[8]&&!mod){var T=P(I[8].x+.5,I[8].y+.5,1),Q=P(pl.x,pl.y,pl.z+1.6),ax=T[0]-Q[0],ay=T[1]-Q[1],L=Math.hypot(ax,ay);if(L>110){var ux=ax/L,uy=ay/L,qx=Q[0]+ux*80,qy=Q[1]+uy*80;f.fillStyle="rgba(255,226,138,"+(.5+.4*Math.sin(t*.006))+")";f.beginPath();f.moveTo(qx+ux*13,qy+uy*13);f.lineTo(qx-ux*7-uy*9,qy-uy*7+ux*9);f.lineTo(qx-ux*7+uy*9,qy-uy*7-ux*9);f.fill()}}}
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
